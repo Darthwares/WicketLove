@@ -36,48 +36,63 @@ export default function Dashboard() {
     const unsubscribe = onAuthChange(async (userData) => {
       if (!userData) {
         router.push('/');
-      } else {
+        return;
+      }
+      
+      try {
         setUser(userData);
         
-        // Fetch user's groups
-        const groupsQuery = query(
-          collection(db, 'groups'),
-          where('memberIds', 'array-contains', userData.id)
-        );
-        const groupsSnapshot = await getDocs(groupsQuery);
-        const userGroups = groupsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setLocalGroups(userGroups);
-        setGroups(userGroups);
-        
-        // Fetch upcoming matches from user's groups
-        if (userGroups.length > 0) {
-          const groupIds = userGroups.map(g => g.id);
-          const matchesQuery = query(
-            collection(db, 'matches'),
-            where('groupId', 'in', groupIds),
-            where('status', '==', 'upcoming')
+        // Fetch user's groups with error handling
+        try {
+          const groupsQuery = query(
+            collection(db, 'groups'),
+            where('memberIds', 'array-contains', userData.id)
           );
-          const matchesSnapshot = await getDocs(matchesQuery);
-          const matches = matchesSnapshot.docs.map(doc => ({
+          const groupsSnapshot = await getDocs(groupsQuery);
+          const userGroups = groupsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           }));
+          setLocalGroups(userGroups);
+          setGroups(userGroups);
           
-          const upcoming = matches
-            .filter(m => isFuture(new Date(m.date)))
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          
-          setUpcomingMatches(upcoming);
-          setMatches(matches);
-          
-          if (upcoming.length > 0) {
-            setNextMatch(upcoming[0]);
+          // Fetch upcoming matches from user's groups
+          if (userGroups.length > 0) {
+            const groupIds = userGroups.map(g => g.id);
+            // Firestore 'in' query has a limit of 10 items
+            const batchedGroupIds = groupIds.slice(0, 10);
+            
+            try {
+              const matchesQuery = query(
+                collection(db, 'matches'),
+                where('groupId', 'in', batchedGroupIds)
+              );
+              const matchesSnapshot = await getDocs(matchesQuery);
+              const matches = matchesSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              
+              const upcoming = matches
+                .filter(m => m.status === 'upcoming' && m.date && isFuture(new Date(m.date)))
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              
+              setUpcomingMatches(upcoming);
+              setMatches(matches);
+              
+              if (upcoming.length > 0) {
+                setNextMatch(upcoming[0]);
+              }
+            } catch (matchError) {
+              console.error('Error fetching matches:', matchError);
+            }
           }
+        } catch (groupError) {
+          console.error('Error fetching groups:', groupError);
         }
-        
+      } catch (error) {
+        console.error('Dashboard initialization error:', error);
+      } finally {
         setLoading(false);
       }
     });

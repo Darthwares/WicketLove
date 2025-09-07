@@ -25,13 +25,17 @@ googleProvider.setCustomParameters({
 });
 
 if (typeof window !== 'undefined') {
-  setPersistence(auth, browserLocalPersistence).catch(console.error);
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.error('Auth persistence error:', error);
+  });
   
-  enableIndexedDbPersistence(db).catch((err) => {
+  enableIndexedDbPersistence(db).catch((err: any) => {
     if (err.code === 'failed-precondition') {
       console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
     } else if (err.code === 'unimplemented') {
       console.warn('The current browser doesn\'t support persistence.');
+    } else {
+      console.error('Persistence error:', err);
     }
   });
 }
