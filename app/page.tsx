@@ -37,14 +37,20 @@ export default function LandingPage() {
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
+      console.log('Starting sign in...');
       const result = await signInWithGoogle();
+      console.log('Sign in result:', result);
+      
       if (result.isNewUser) {
+        console.log('New user, redirecting to onboarding...');
         router.push('/onboarding');
       } else {
+        console.log('Existing user, redirecting to dashboard...');
         router.push('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign in error:', error);
+      console.error('Error details:', error?.message || error);
       setIsLoading(false);
     }
   };
