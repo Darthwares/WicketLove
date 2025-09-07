@@ -5,15 +5,12 @@ import { User } from '@/types';
 
 export async function signInWithGoogle() {
   try {
-    console.log('Initiating Google sign in...');
     const result = await signInWithPopup(auth, googleProvider);
     const firebaseUser = result.user;
-    console.log('Firebase user:', firebaseUser.email);
     
     const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
     
     if (!userDoc.exists()) {
-      console.log('Creating new user profile...');
       const newUser: Omit<User, 'id'> = {
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || '',
@@ -36,18 +33,14 @@ export async function signInWithGoogle() {
       };
       
       await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-      console.log('New user created successfully');
       
       return { user: { ...newUser, id: firebaseUser.uid }, isNewUser: true };
     }
     
-    console.log('Existing user found');
     const userData = { ...userDoc.data(), id: firebaseUser.uid } as User;
     return { user: userData, isNewUser: false };
   } catch (error: any) {
-    console.error('Error signing in with Google:', error);
-    console.error('Error code:', error?.code);
-    console.error('Error message:', error?.message);
+    console.error('Error signing in with Google:', error?.message || error);
     throw error;
   }
 }
