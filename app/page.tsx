@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cricket, Users, Trophy, Calendar, BarChart3, Share2, ArrowRight } from 'lucide-react';
+import { Activity, Users, Trophy, Calendar, BarChart3, Share2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { signInWithGoogle } from '@/lib/utils/auth';
@@ -76,7 +76,7 @@ export default function LandingPage() {
       description: 'Automatic captain rotation and position preferences',
     },
     {
-      icon: Cricket,
+      icon: Users,
       title: 'Community Building',
       description: 'Connect with cricket lovers in your area',
     },
@@ -92,7 +92,7 @@ export default function LandingPage() {
       >
         <nav className="flex justify-between items-center mb-16">
           <div className="flex items-center gap-2">
-            <Cricket className="h-8 w-8 text-green-600" />
+            <Activity className="h-8 w-8 text-green-600" />
             <span className="text-2xl font-bold text-gray-900">Wicket Love</span>
           </div>
         </nav>
