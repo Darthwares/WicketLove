@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Hash } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { collection, query, where, getDocs, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export default function JoinGroup() {
+function JoinGroupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -68,8 +68,8 @@ export default function JoinGroup() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -80,7 +80,7 @@ export default function JoinGroup() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-xl font-semibold">Join Group</h1>
+            <h1 className="text-xl font-semibold text-foreground">Join Group</h1>
           </div>
         </div>
       </header>
@@ -102,7 +102,7 @@ export default function JoinGroup() {
                 <div className="space-y-2">
                   <Label htmlFor="code">Invite Code</Label>
                   <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="code"
                       placeholder="Enter 8-character code"
@@ -113,13 +113,13 @@ export default function JoinGroup() {
                       required
                     />
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Ask your group admin for the invite code
                   </p>
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
                     {error}
                   </div>
                 )}
@@ -127,13 +127,13 @@ export default function JoinGroup() {
                 <Button
                   type="submit"
                   disabled={loading || inviteCode.length < 8}
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
                   {loading ? (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+                      className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full"
                     />
                   ) : (
                     'Join Group'
@@ -144,7 +144,7 @@ export default function JoinGroup() {
           </Card>
 
           <div className="mt-8 text-center">
-            <p className="text-gray-500 mb-4">Don't have a group yet?</p>
+            <p className="text-muted-foreground mb-4">Don't have a group yet?</p>
             <Button
               onClick={() => router.push('/groups/create')}
               variant="outline"
@@ -156,5 +156,21 @@ export default function JoinGroup() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+export default function JoinGroup() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full"
+        />
+      </div>
+    }>
+      <JoinGroupContent />
+    </Suspense>
   );
 }

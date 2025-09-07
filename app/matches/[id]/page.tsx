@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, MapPin, Clock, Users, Share2, Check, X, HelpCircle } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,7 @@ import { format, formatDistanceToNow, isPast } from 'date-fns';
 import { openWhatsAppShare, generateMatchShareMessage } from '@/lib/utils/whatsapp';
 import { balanceTeams } from '@/lib/utils/team-balance';
 
-export default function MatchPage({ params }: { params: { id: string } }) {
+export default function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { user } = useAuth();
   const [match, setMatch] = useState<any>(null);
@@ -25,13 +26,18 @@ export default function MatchPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [teams, setTeams] = useState<{ red: any[], blue: any[] }>({ red: [], blue: [] });
+  const [matchId, setMatchId] = useState<string>('');
 
   useEffect(() => {
-    if (!params.id || !user) return;
+    params.then(p => setMatchId(p.id));
+  }, [params]);
 
-    const unsubscribe = onSnapshot(doc(db, 'matches', params.id), async (docSnap) => {
+  useEffect(() => {
+    if (!matchId || !user) return;
+
+    const unsubscribe = onSnapshot(doc(db, 'matches', matchId), async (docSnap) => {
       if (docSnap.exists()) {
-        const matchData = { id: docSnap.id, ...docSnap.data() };
+        const matchData = { id: docSnap.id, ...docSnap.data() } as any;
         setMatch(matchData);
 
         const groupDoc = await getDoc(doc(db, 'groups', matchData.groupId));
@@ -50,9 +56,9 @@ export default function MatchPage({ params }: { params: { id: string } }) {
         }));
         setPlayers(playersData);
 
-        const goingPlayers = playersData.filter(p => matchData.rsvps[p.id] === 'going');
+        const goingPlayers = playersData.filter((p: any) => matchData.rsvps?.[p.id] === 'going');
         if (goingPlayers.length >= matchData.minPlayers && group?.settings?.autoBalance) {
-          const balanced = balanceTeams(goingPlayers);
+          const balanced = balanceTeams(goingPlayers as any);
           setTeams(balanced);
         }
 
@@ -61,7 +67,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
     });
 
     return () => unsubscribe();
-  }, [params.id, user]);
+  }, [matchId, user]);
 
   const handleRSVP = async (status: 'going' | 'maybe' | 'not-going') => {
     if (!user || !match) return;
@@ -89,7 +95,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="h-12 w-12 border-4 border-green-600 border-t-transparent rounded-full"
+          className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full"
         />
       </div>
     );
@@ -100,7 +106,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center py-12">
-            <p className="text-gray-500">Match not found</p>
+            <p className="text-muted-foreground">Match not found</p>
             <Button onClick={() => router.push('/dashboard')} className="mt-4">
               Go to Dashboard
             </Button>
@@ -117,8 +123,8 @@ export default function MatchPage({ params }: { params: { id: string } }) {
   const isRSVPClosed = isPast(new Date(match.rsvpDeadline));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -132,10 +138,13 @@ export default function MatchPage({ params }: { params: { id: string } }) {
               </Button>
               <h1 className="text-xl font-semibold">{match.title || 'Cricket Match'}</h1>
             </div>
-            <Button onClick={handleShare} variant="outline" size="sm">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button onClick={handleShare} variant="outline" size="sm">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -154,33 +163,33 @@ export default function MatchPage({ params }: { params: { id: string } }) {
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="h-4 w-4" />
                     <span>{format(new Date(match.date), 'EEEE, dd MMM yyyy')}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-4 w-4" />
                     <span>{format(new Date(match.date), 'hh:mm a')}</span>
                     <Badge variant="outline" className="ml-2">
                       {formatDistanceToNow(new Date(match.date), { addSuffix: true })}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
                     <span>{match.venue}</span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-500">Format:</span>
+                    <span className="text-sm text-muted-foreground">Format:</span>
                     <Badge>{match.format} {match.overs && `(${match.overs} overs)`}</Badge>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-500">Ground:</span>
+                    <span className="text-sm text-muted-foreground">Ground:</span>
                     <Badge variant="outline">{match.groundType}</Badge>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-500">Ball:</span>
+                    <span className="text-sm text-muted-foreground">Ball:</span>
                     <Badge variant="outline">{match.ballType}</Badge>
                   </div>
                 </div>
@@ -188,12 +197,11 @@ export default function MatchPage({ params }: { params: { id: string } }) {
 
               {!isRSVPClosed ? (
                 <div className="pt-4 border-t">
-                  <p className="text-sm text-gray-500 mb-3">Your RSVP:</p>
+                  <p className="text-sm text-muted-foreground mb-3">Your RSVP:</p>
                   <div className="flex gap-2">
                     <Button
                       onClick={() => handleRSVP('going')}
                       variant={userRSVP === 'going' ? 'default' : 'outline'}
-                      className={userRSVP === 'going' ? 'bg-green-600 hover:bg-green-700' : ''}
                       disabled={rsvpLoading}
                     >
                       <Check className="h-4 w-4 mr-2" />
@@ -201,8 +209,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                     </Button>
                     <Button
                       onClick={() => handleRSVP('maybe')}
-                      variant={userRSVP === 'maybe' ? 'default' : 'outline'}
-                      className={userRSVP === 'maybe' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                      variant={userRSVP === 'maybe' ? 'secondary' : 'outline'}
                       disabled={rsvpLoading}
                     >
                       <HelpCircle className="h-4 w-4 mr-2" />
@@ -210,15 +217,14 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                     </Button>
                     <Button
                       onClick={() => handleRSVP('not-going')}
-                      variant={userRSVP === 'not-going' ? 'default' : 'outline'}
-                      className={userRSVP === 'not-going' ? 'bg-red-600 hover:bg-red-700' : ''}
+                      variant={userRSVP === 'not-going' ? 'destructive' : 'outline'}
                       disabled={rsvpLoading}
                     >
                       <X className="h-4 w-4 mr-2" />
                       Can't Make It
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-3">
+                  <p className="text-xs text-muted-foreground mt-3">
                     RSVP deadline: {format(new Date(match.rsvpDeadline), 'dd MMM, hh:mm a')}
                   </p>
                 </div>
@@ -249,12 +255,12 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                 <TabsContent value="rsvp" className="space-y-4">
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm font-medium text-green-600 mb-2">Going ({goingCount})</p>
+                      <p className="text-sm font-medium text-primary mb-2">Going ({goingCount})</p>
                       <div className="flex flex-wrap gap-2">
                         {players
                           .filter(p => match.rsvps[p.id] === 'going')
                           .map(player => (
-                            <div key={player.id} className="flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full">
+                            <div key={player.id} className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={player.photoURL} />
                                 <AvatarFallback>{player.displayName?.[0]}</AvatarFallback>
@@ -266,12 +272,12 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-yellow-600 mb-2">Maybe ({maybeCount})</p>
+                      <p className="text-sm font-medium text-yellow-500 mb-2">Maybe ({maybeCount})</p>
                       <div className="flex flex-wrap gap-2">
                         {players
                           .filter(p => match.rsvps[p.id] === 'maybe')
                           .map(player => (
-                            <div key={player.id} className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-full">
+                            <div key={player.id} className="flex items-center gap-2 bg-yellow-500/10 px-3 py-1 rounded-full">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={player.photoURL} />
                                 <AvatarFallback>{player.displayName?.[0]}</AvatarFallback>
@@ -283,12 +289,12 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-red-600 mb-2">Not Going ({notGoingCount})</p>
+                      <p className="text-sm font-medium text-destructive mb-2">Not Going ({notGoingCount})</p>
                       <div className="flex flex-wrap gap-2">
                         {players
                           .filter(p => match.rsvps[p.id] === 'not-going')
                           .map(player => (
-                            <div key={player.id} className="flex items-center gap-2 bg-red-50 px-3 py-1 rounded-full">
+                            <div key={player.id} className="flex items-center gap-2 bg-destructive/10 px-3 py-1 rounded-full">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={player.photoURL} />
                                 <AvatarFallback>{player.displayName?.[0]}</AvatarFallback>
@@ -303,9 +309,9 @@ export default function MatchPage({ params }: { params: { id: string } }) {
 
                 <TabsContent value="teams" className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Card className="border-red-200">
-                      <CardHeader className="bg-red-50">
-                        <CardTitle className="text-red-600">Red Team</CardTitle>
+                    <Card className="border-l-4 border-l-chart-2">
+                      <CardHeader className="bg-chart-2/10">
+                        <CardTitle className="text-chart-2">Team A</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-4">
                         <div className="space-y-2">
@@ -323,9 +329,9 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                       </CardContent>
                     </Card>
 
-                    <Card className="border-blue-200">
-                      <CardHeader className="bg-blue-50">
-                        <CardTitle className="text-blue-600">Blue Team</CardTitle>
+                    <Card className="border-l-4 border-l-chart-3">
+                      <CardHeader className="bg-chart-3/10">
+                        <CardTitle className="text-chart-3">Team B</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-4">
                         <div className="space-y-2">
@@ -354,7 +360,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
                 <CardTitle>Additional Notes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">{match.notes}</p>
+                <p className="text-muted-foreground">{match.notes}</p>
               </CardContent>
             </Card>
           )}

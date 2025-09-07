@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { onAuthChange, logOut } from '@/lib/utils/auth';
 import { useStore } from '@/lib/store';
 import { format, formatDistanceToNow, isFuture } from 'date-fns';
@@ -52,9 +53,9 @@ export default function Dashboard() {
           const userGroups = groupsSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          }));
+          })) as any[];
           setLocalGroups(userGroups);
-          setGroups(userGroups);
+          setGroups(userGroups as any);
           
           // Fetch upcoming matches from user's groups
           if (userGroups.length > 0) {
@@ -71,14 +72,14 @@ export default function Dashboard() {
               const matches = matchesSnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
-              }));
+              })) as any[];
               
               const upcoming = matches
-                .filter(m => m.status === 'upcoming' && m.date && isFuture(new Date(m.date)))
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                .filter((m: any) => m.status === 'upcoming' && m.date && isFuture(new Date(m.date)))
+                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
               
               setUpcomingMatches(upcoming);
-              setMatches(matches);
+              setMatches(matches as any);
               
               if (upcoming.length > 0) {
                 setNextMatch(upcoming[0]);
@@ -132,15 +133,15 @@ export default function Dashboard() {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="h-12 w-12 border-4 border-green-600 border-t-transparent rounded-full"
+          className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full"
         />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -150,13 +151,16 @@ export default function Dashboard() {
               </Avatar>
               <div>
                 <p className="font-semibold">{user?.displayName}</p>
-                <p className="text-sm text-gray-500">Rating: {user?.rating}</p>
+                <p className="text-sm text-muted-foreground">Rating: {user?.rating}</p>
               </div>
             </div>
-            <Button onClick={handleLogout} variant="ghost" size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button onClick={handleLogout} variant="ghost" size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -168,14 +172,14 @@ export default function Dashboard() {
             animate={{ y: 0, opacity: 1 }}
             className="mb-8"
           >
-            <Card className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
+            <Card className="bg-gradient-to-r from-primary to-chart-1 text-primary-foreground">
               <CardHeader>
-                <CardTitle className="text-2xl">Next Match</CardTitle>
+                <CardTitle className="text-2xl text-primary-foreground">Next Match</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-3xl font-bold mb-2">{nextMatch.title}</h3>
+                    <h3 className="text-3xl font-bold mb-2 text-primary-foreground">{nextMatch.title}</h3>
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
@@ -199,21 +203,21 @@ export default function Dashboard() {
                     <Button 
                       onClick={() => handleRSVP(nextMatch.id, 'going')}
                       variant="secondary"
-                      className="bg-white text-green-600 hover:bg-green-50"
+                      className="bg-card text-primary hover:bg-primary/10"
                     >
                       Going
                     </Button>
                     <Button 
                       onClick={() => handleRSVP(nextMatch.id, 'maybe')}
                       variant="secondary"
-                      className="bg-white text-yellow-600 hover:bg-yellow-50"
+                      className="bg-card text-yellow-500 dark:text-yellow-400 hover:bg-yellow-500/10"
                     >
                       Maybe
                     </Button>
                     <Button 
                       onClick={() => handleRSVP(nextMatch.id, 'not-going')}
                       variant="secondary"
-                      className="bg-white text-red-600 hover:bg-red-50"
+                      className="bg-card text-destructive hover:bg-destructive/10"
                     >
                       Can't Make It
                     </Button>
@@ -232,7 +236,7 @@ export default function Dashboard() {
           >
             <Button 
               onClick={() => router.push('/matches/create')}
-              className="w-full h-32 bg-green-600 hover:bg-green-700"
+              className="w-full h-32 bg-primary hover:bg-primary/90"
             >
               <div className="text-center">
                 <Plus className="h-8 w-8 mb-2 mx-auto" />
@@ -296,9 +300,9 @@ export default function Dashboard() {
         {groups.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No Groups Yet</h3>
-              <p className="text-gray-500 mb-4">Create or join a group to start organizing matches</p>
+              <p className="text-muted-foreground mb-4">Create or join a group to start organizing matches</p>
               <div className="flex gap-2 justify-center">
                 <Button onClick={() => router.push('/groups/create')}>
                   Create Group
@@ -326,10 +330,10 @@ export default function Dashboard() {
                     </Avatar>
                     <div>
                       <h3 className="font-semibold">{group.name}</h3>
-                      <p className="text-sm text-gray-500">{group.memberIds.length} members</p>
+                      <p className="text-sm text-muted-foreground">{group.memberIds.length} members</p>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </CardContent>
               </Card>
             ))}

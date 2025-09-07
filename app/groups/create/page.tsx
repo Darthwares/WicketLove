@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/components/providers/auth-provider';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { nanoid } from 'nanoid';
 
@@ -32,13 +32,23 @@ export default function CreateGroup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    
+    if (!user) {
+      console.error('No user found');
+      alert('Please sign in to create a group');
+      return;
+    }
+
+    console.log('Creating group with user:', user.id);
+    console.log('Form data:', formData);
 
     setLoading(true);
     try {
       const inviteCode = generateInviteCode();
       const groupData = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        photoURL: formData.photoURL || '',
         adminIds: [user.id],
         memberIds: [user.id],
         inviteCode,
@@ -48,21 +58,26 @@ export default function CreateGroup() {
           autoBalance: formData.autoBalance,
           captainRotation: formData.captainRotation,
         },
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         createdBy: user.id,
       };
 
+      console.log('Attempting to create group with data:', groupData);
       const docRef = await addDoc(collection(db, 'groups'), groupData);
+      console.log('Group created successfully with ID:', docRef.id);
+      
       router.push(`/groups/${docRef.id}`);
     } catch (error) {
       console.error('Error creating group:', error);
+      alert(`Failed to create group: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -73,7 +88,7 @@ export default function CreateGroup() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-xl font-semibold">Create New Group</h1>
+            <h1 className="text-xl font-semibold text-foreground">Create New Group</h1>
           </div>
         </div>
       </header>
@@ -117,11 +132,11 @@ export default function CreateGroup() {
                 <div className="space-y-2">
                   <Label htmlFor="photo">Group Photo (Optional)</Label>
                   <div className="flex items-center gap-4">
-                    <div className="h-20 w-20 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div className="h-20 w-20 bg-muted rounded-lg flex items-center justify-center">
                       {formData.photoURL ? (
                         <img src={formData.photoURL} alt="Group" className="h-full w-full object-cover rounded-lg" />
                       ) : (
-                        <Upload className="h-8 w-8 text-gray-400" />
+                        <Upload className="h-8 w-8 text-muted-foreground" />
                       )}
                     </div>
                     <Button type="button" variant="outline" size="sm">
@@ -136,7 +151,7 @@ export default function CreateGroup() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="private">Private Group</Label>
-                      <p className="text-sm text-gray-500">Only invited members can join</p>
+                      <p className="text-sm text-muted-foreground">Only invited members can join</p>
                     </div>
                     <Switch
                       id="private"
@@ -148,7 +163,7 @@ export default function CreateGroup() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="autoBalance">Auto-Balance Teams</Label>
-                      <p className="text-sm text-gray-500">Automatically create balanced teams</p>
+                      <p className="text-sm text-muted-foreground">Automatically create balanced teams</p>
                     </div>
                     <Switch
                       id="autoBalance"
@@ -160,7 +175,7 @@ export default function CreateGroup() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="captainRotation">Captain Rotation</Label>
-                      <p className="text-sm text-gray-500">Rotate captains automatically</p>
+                      <p className="text-sm text-muted-foreground">Rotate captains automatically</p>
                     </div>
                     <Switch
                       id="captainRotation"
@@ -182,13 +197,13 @@ export default function CreateGroup() {
                   <Button
                     type="submit"
                     disabled={loading || !formData.name}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="flex-1 bg-primary hover:bg-primary/90"
                   >
                     {loading ? (
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+                        className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full"
                       />
                     ) : (
                       'Create Group'

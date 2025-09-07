@@ -111,8 +111,8 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -124,7 +124,7 @@ export default function ProfilePage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
-              <h1 className="text-xl font-semibold">Profile</h1>
+              <h1 className="text-xl font-semibold text-foreground">Profile</h1>
             </div>
             <Button 
               onClick={() => router.push('/profile/edit')}
@@ -149,7 +149,7 @@ export default function ProfilePage() {
                 </Avatar>
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold">{user.displayName}</h2>
-                  <p className="text-gray-500">{user.email}</p>
+                  <p className="text-muted-foreground">{user.email}</p>
                   <div className="flex items-center gap-4 mt-3">
                     <Badge>{user.role}</Badge>
                     <Badge variant="outline">{user.battingStyle} handed</Badge>
@@ -159,8 +159,8 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">{user.rating}</div>
-                  <p className="text-sm text-gray-500">Rating</p>
+                  <div className="text-3xl font-bold text-primary">{user.rating}</div>
+                  <p className="text-sm text-muted-foreground">Rating</p>
                 </div>
               </div>
             </CardContent>
@@ -170,11 +170,11 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-500">Win Rate</span>
-                  <span className="text-2xl font-bold text-green-600">{winRate}%</span>
+                  <span className="text-sm text-muted-foreground">Win Rate</span>
+                  <span className="text-2xl font-bold text-primary">{winRate}%</span>
                 </div>
                 <Progress value={winRate} className="h-2" />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   {stats.wins}W / {stats.losses}L / {stats.draws}D
                 </p>
               </CardContent>
@@ -183,13 +183,13 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-500">Batting Avg</span>
+                  <span className="text-sm text-muted-foreground">Batting Avg</span>
                   <span className="text-2xl font-bold">{battingAverage}</span>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {stats.totalRuns} runs in {stats.totalMatches} matches
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Highest: {stats.highestScore}
                 </p>
               </CardContent>
@@ -198,13 +198,13 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-500">Bowling</span>
+                  <span className="text-sm text-muted-foreground">Bowling</span>
                   <span className="text-2xl font-bold">{stats.totalWickets}</span>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Total wickets
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Best: {stats.bestBowling}
                 </p>
               </CardContent>
@@ -220,10 +220,10 @@ export default function ProfilePage() {
                 {stats.recentForm.map((result, index) => (
                   <div
                     key={index}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                      result === 'W' ? 'bg-green-500' : 
-                      result === 'L' ? 'bg-red-500' : 
-                      'bg-gray-400'
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                      result === 'W' ? 'bg-primary text-primary-foreground' : 
+                      result === 'L' ? 'bg-destructive text-destructive-foreground' : 
+                      'bg-muted text-muted-foreground'
                     }`}
                   >
                     {result}
@@ -246,19 +246,19 @@ export default function ProfilePage() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Matches Played</p>
+                        <p className="text-sm text-muted-foreground">Matches Played</p>
                         <p className="text-2xl font-semibold">{stats.totalMatches}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Total Runs</p>
+                        <p className="text-sm text-muted-foreground">Total Runs</p>
                         <p className="text-2xl font-semibold">{stats.totalRuns}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Total Wickets</p>
+                        <p className="text-sm text-muted-foreground">Total Wickets</p>
                         <p className="text-2xl font-semibold">{stats.totalWickets}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Catches</p>
+                        <p className="text-sm text-muted-foreground">Catches</p>
                         <p className="text-2xl font-semibold">{stats.catches}</p>
                       </div>
                     </div>
@@ -274,15 +274,15 @@ export default function ProfilePage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-4">
                         <div className={`p-3 rounded-full ${
-                          achievement.unlocked ? 'bg-green-100' : 'bg-gray-100'
+                          achievement.unlocked ? 'bg-primary/10' : 'bg-muted'
                         }`}>
                           <achievement.icon className={`h-6 w-6 ${
-                            achievement.unlocked ? 'text-green-600' : 'text-gray-400'
+                            achievement.unlocked ? 'text-primary' : 'text-muted-foreground/70'
                           }`} />
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{achievement.label}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {achievement.unlocked ? 'Unlocked' : 'Locked'}
                           </p>
                         </div>

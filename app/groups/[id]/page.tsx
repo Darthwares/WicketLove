@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/components/providers/auth-provider';
 import { doc, getDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -16,7 +17,7 @@ import { format } from 'date-fns';
 import { openWhatsAppShare, generateGroupInviteMessage } from '@/lib/utils/whatsapp';
 import QRCode from 'qrcode';
 
-export default function GroupPage({ params }: { params: { id: string } }) {
+export default function GroupPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { user } = useAuth();
   const [group, setGroup] = useState<any>(null);
@@ -25,23 +26,28 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [qrCode, setQrCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [groupId, setGroupId] = useState<string>('');
 
   useEffect(() => {
-    if (!params.id || !user) return;
+    params.then(p => setGroupId(p.id));
+  }, [params]);
+
+  useEffect(() => {
+    if (!groupId || !user) return;
 
     const fetchGroupData = async () => {
-      const groupDoc = await getDoc(doc(db, 'groups', params.id));
+      const groupDoc = await getDoc(doc(db, 'groups', groupId));
       if (!groupDoc.exists()) {
         setLoading(false);
         return;
       }
 
-      const groupData = { id: groupDoc.id, ...groupDoc.data() };
+      const groupData = { id: groupDoc.id, ...groupDoc.data() } as any;
       setGroup(groupData);
 
       const membersQuery = query(
         collection(db, 'users'),
-        where('__name__', 'in', groupData.memberIds)
+        where('__name__', 'in', groupData.memberIds || [])
       );
       const membersSnapshot = await getDocs(membersQuery);
       const membersData = membersSnapshot.docs.map(doc => ({
@@ -52,14 +58,14 @@ export default function GroupPage({ params }: { params: { id: string } }) {
 
       const matchesQuery = query(
         collection(db, 'matches'),
-        where('groupId', '==', params.id)
+        where('groupId', '==', groupId)
       );
       const matchesSnapshot = await getDocs(matchesQuery);
       const matchesData = matchesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
-      setMatches(matchesData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      })) as any[];
+      setMatches(matchesData.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
       const qr = await QRCode.toDataURL(groupData.inviteLink);
       setQrCode(qr);
@@ -68,7 +74,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
     };
 
     fetchGroupData();
-  }, [params.id, user]);
+  }, [groupId, user]);
 
   const handleCopyInvite = () => {
     if (group) {
@@ -93,7 +99,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="h-12 w-12 border-4 border-green-600 border-t-transparent rounded-full"
+          className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full"
         />
       </div>
     );
@@ -104,7 +110,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="text-center py-12">
-            <p className="text-gray-500">Group not found</p>
+            <p className="text-muted-foreground">Group not found</p>
             <Button onClick={() => router.push('/dashboard')} className="mt-4">
               Go to Dashboard
             </Button>
@@ -115,8 +121,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -135,15 +141,18 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                 </Avatar>
                 <div>
                   <h1 className="text-xl font-semibold">{group.name}</h1>
-                  <p className="text-sm text-gray-500">{members.length} members</p>
+                  <p className="text-sm text-muted-foreground">{members.length} members</p>
                 </div>
               </div>
             </div>
-            {isAdmin && (
-              <Button onClick={() => router.push(`/groups/${group.id}/settings`)} variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              {isAdmin && (
+                <Button onClick={() => router.push(`/groups/${group.id}/settings`)} variant="ghost" size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -153,7 +162,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           {group.description && (
             <Card>
               <CardContent className="pt-6">
-                <p className="text-gray-600">{group.description}</p>
+                <p className="text-muted-foreground">{group.description}</p>
               </CardContent>
             </Card>
           )}
@@ -161,7 +170,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           <div className="grid md:grid-cols-3 gap-4">
             <Button 
               onClick={() => router.push(`/matches/create?group=${group.id}`)}
-              className="h-24 bg-green-600 hover:bg-green-700"
+              className="h-24 bg-primary hover:bg-primary/90"
             >
               <div className="text-center">
                 <Plus className="h-6 w-6 mb-1 mx-auto" />
@@ -202,8 +211,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
               {matches.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">No matches yet</p>
+                    <Calendar className="h-12 w-12 text-muted-foreground/70 mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">No matches yet</p>
                     <Button onClick={() => router.push(`/matches/create?group=${group.id}`)}>
                       Create First Match
                     </Button>
@@ -220,14 +229,14 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-semibold text-lg">{match.title || `${match.format} Match`}</h3>
-                          <p className="text-gray-600">{format(new Date(match.date), 'EEEE, dd MMM yyyy')}</p>
-                          <p className="text-sm text-gray-500">{match.venue}</p>
+                          <p className="text-muted-foreground">{format(new Date(match.date), 'EEEE, dd MMM yyyy')}</p>
+                          <p className="text-sm text-muted-foreground">{match.venue}</p>
                         </div>
                         <Badge variant={match.status === 'upcoming' ? 'default' : 'secondary'}>
                           {match.status}
                         </Badge>
                       </div>
-                      <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
+                      <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
                         <span>{Object.values(match.rsvps || {}).filter((s: any) => s === 'going').length} going</span>
                         <span>{Object.values(match.rsvps || {}).filter((s: any) => s === 'maybe').length} maybe</span>
                       </div>
@@ -250,7 +259,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                           </Avatar>
                           <div>
                             <p className="font-medium">{member.displayName}</p>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Badge variant="outline" className="text-xs">
                                 {member.role}
                               </Badge>
@@ -275,9 +284,9 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Share this code:</p>
+                    <p className="text-sm text-muted-foreground mb-2">Share this code:</p>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 bg-gray-100 px-4 py-2 rounded-lg text-lg font-mono text-center">
+                      <code className="flex-1 bg-muted px-4 py-2 rounded-lg text-lg font-mono text-center">
                         {group.inviteCode}
                       </code>
                       <Button onClick={handleCopyInvite} variant="outline">
@@ -287,7 +296,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                   </div>
 
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-4">Or scan this QR code:</p>
+                    <p className="text-sm text-muted-foreground mb-4">Or scan this QR code:</p>
                     {qrCode && (
                       <img src={qrCode} alt="Group QR Code" className="mx-auto" />
                     )}

@@ -108,12 +108,12 @@ export default function CreateMatch() {
 
   if (groups.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Groups Yet</h3>
-            <p className="text-gray-500 mb-6">You need to be part of a group to create matches</p>
+            <p className="text-muted-foreground mb-6">You need to be part of a group to create matches</p>
             <div className="space-y-2">
               <Button 
                 onClick={() => router.push('/groups/create')}
@@ -136,8 +136,8 @@ export default function CreateMatch() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -148,7 +148,7 @@ export default function CreateMatch() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-xl font-semibold">Create Match</h1>
+            <h1 className="text-xl font-semibold text-foreground">Create Match</h1>
           </div>
         </div>
       </header>
@@ -222,7 +222,7 @@ export default function CreateMatch() {
                 <div className="space-y-2">
                   <Label htmlFor="venue">Venue *</Label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="venue"
                       placeholder="Cricket Ground Name"
@@ -389,13 +389,13 @@ export default function CreateMatch() {
               <Button
                 type="submit"
                 disabled={loading || !formData.groupId || !formData.venue}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-primary hover:bg-primary/90"
               >
                 {loading ? (
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+                    className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full"
                   />
                 ) : (
                   'Create Match'

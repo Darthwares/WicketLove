@@ -505,3 +505,4 @@ git push origin feature/feature-name
 *Remember: Focus on mobile-first, keep it simple, and make it delightful!*
 
 *Last Updated: MVP Launch Night*
+- always use bun to install manage packages
